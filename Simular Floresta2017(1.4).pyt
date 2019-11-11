@@ -597,15 +597,15 @@ class ProjectDiameters(object):  # Tool number 2
             direction="Input")
         trees.filter.list = ["Point"]
 
-        eq_type = arcpy.Parameter(
-            displayName="Equation type",
-            name="eq_type",
+        model_type = arcpy.Parameter(
+            displayName="Model type",
+            name="model_type",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        eq_type.filter.type = "ValueList"
-        eq_type.filter.list = ["Lundqvist_Korf", "Schumacher", "Richards"]  #  Available equations
-        eq_type.value = "Richards"  # Default value as example
+        model_type.filter.type = "ValueList"
+        model_type.filter.list = ["Lundqvist_Korf", "Schumacher", "Richards"]  #  Available models
+        model_type.value = "Richards"  # Default value as example
 
         b1_dbh = arcpy.Parameter(
             displayName=u"\u03b2\u2081 parameter",
@@ -740,7 +740,7 @@ class ProjectDiameters(object):  # Tool number 2
         het_index.filter.list = [0.00, 1.00]
 
         params = [trees,
-                  eq_type,
+                  model_type,
                   b1_dbh,
                   b2_dbh,
                   b3_dbh,
@@ -764,7 +764,7 @@ class ProjectDiameters(object):  # Tool number 2
 
     # Field validation according to what is inserted as parameter
     def updateParameters(self, parameters):
-        eq_type = parameters[1]
+        model_type = parameters[1]
         b1_dbh = parameters[2]
         b2_dbh = parameters[3]
         b3_dbh = parameters[4]
@@ -780,20 +780,20 @@ class ProjectDiameters(object):  # Tool number 2
         if time_first_proj.value:
             time_first_proj.value = int(time_first_proj.value)
 
-        # Validation according to what is inserted as eq_type.
-        if eq_type.value == "Schumacher":
+        # Validation according to what is inserted as model_type.
+        if model_type.value == "Schumacher":
             b1_dbh.enabled = True
             b2_dbh.value = None
             b2_dbh.enabled = False
             b3_dbh.value = None
             b3_dbh.enabled = False
-        elif eq_type.value == "Lundqvist_Korf":
+        elif model_type.value == "Lundqvist_Korf":
             b1_dbh.enabled = True
             b2_dbh.enabled = True
             b3_dbh.value = None
             b3_dbh.enabled = False
 
-        elif eq_type.value == "Richards":
+        elif model_type.value == "Richards":
             b1_dbh.enabled = True
             b2_dbh.enabled = True
             b3_dbh.enabled = True
@@ -858,7 +858,7 @@ class ProjectDiameters(object):  # Tool number 2
 
     # Warning and error messages
     def updateMessages(self, parameters):
-        eq_type = parameters[1]
+        model_type = parameters[1]
         b2_dbh = parameters[3]
         b3_dbh = parameters[4]
         surv_type = parameters[11]
@@ -867,13 +867,13 @@ class ProjectDiameters(object):  # Tool number 2
         b1_n = parameters[14]
         b2_n = parameters[15]
 
-        # Error messages for parameters from DBH equations.
-        if eq_type.value:
-            if eq_type.value in ("Lundqvist_Korf", "Richards"):
+        # Error messages for parameters from DBH models.
+        if model_type.value:
+            if model_type.value in ("Lundqvist_Korf", "Richards"):
                 if not b2_dbh.value and (b2_dbh.value != 0):
                     b2_dbh.setErrorMessage(
                         u"\u03b2\u2082 parameter is required for selected model.")
-            if eq_type.value == "Richards":
+            if model_type.value == "Richards":
                 if not b3_dbh.value and (b3_dbh.value != 0):
                     b3_dbh.setErrorMessage(
                         u"\u03b2\u2083 parameter is required for selected model.")
@@ -902,7 +902,7 @@ class ProjectDiameters(object):  # Tool number 2
     # Tool execution
     def execute(self, parameters, messages):
         trees = parameters[0].valueAsText
-        eq_type = parameters[1].valueAsText
+        model_type = parameters[1].valueAsText
         b1_dbh = parameters[2].value
         b2_dbh = parameters[3].value
         b3_dbh = parameters[4].value
@@ -1054,31 +1054,33 @@ class ProjectDiameters(object):  # Tool number 2
                        k in arcpy.da.SearchCursor(trees, ["OID@", i_dbh_f])}
 
             # Calculation of the growth rate for each tree (dbh2 / dbh1).
-            if eq_type == "Lundqvist_Korf":
-                growth = {k: (age_dbh[k][2],
-                              Lundqvist_Korf(age_dbh[k][2], age_dbh[k][0],
-                                             age_dbh[k][1], b1_dbh, b2_dbh) / age_dbh[k][2])
-                          if age_dbh[k][2] not in (None, 0)
-                          else (age_dbh[k][2], age_dbh[k][2])
-                          for k in age_dbh}
-            elif eq_type == "Schumacher":
-                growth = {k: (age_dbh[k][2],
-                              Schumacher(age_dbh[k][2], age_dbh[k][0],
-                                         age_dbh[k][1], b1_dbh) / age_dbh[k][2])
-                          if age_dbh[k][2] not in (None, 0)
-                          else (age_dbh[k][2], age_dbh[k][2])
-                          for k in age_dbh}
-            elif eq_type == "Richards":
-                growth = {k: (age_dbh[k][2],
-                              Richards(age_dbh[k][2], age_dbh[k][0],
-                                       age_dbh[k][1], b1_dbh, b2_dbh, b3_dbh) / age_dbh[k][2])
-                          if age_dbh[k][2] not in (None, 0)
-                          else (age_dbh[k][2], age_dbh[k][2])
-                          for k in age_dbh}
+            if model_type == "Lundqvist_Korf":
+                growth = {
+                    k: (age_dbh[k][2],
+                        Lundqvist_Korf(age_dbh[k][2], age_dbh[k][0], age_dbh[k][1], b1_dbh, b2_dbh) / age_dbh[k][2])
+                    if age_dbh[k][2] not in (None, 0)
+                    else (age_dbh[k][2], age_dbh[k][2])
+                    for k in age_dbh}
 
-            # Definition of a formula to apply of a disturbance in the growth
-            # rate of each tree.
-            def Disturbance(growth_rate, het_index):
+            elif model_type == "Schumacher":
+                growth = {
+                    k: (age_dbh[k][2],
+                        Schumacher(age_dbh[k][2], age_dbh[k][0], age_dbh[k][1], b1_dbh) / age_dbh[k][2])
+                    if age_dbh[k][2] not in (None, 0)
+                    else (age_dbh[k][2], age_dbh[k][2])
+                    for k in age_dbh}
+
+            elif model_type == "Richards":
+                growth = {
+                    k: (age_dbh[k][2],
+                        Richards(age_dbh[k][2], age_dbh[k][0], age_dbh[k][1], b1_dbh, b2_dbh, b3_dbh) / age_dbh[k][2])
+                    if age_dbh[k][2] not in (None, 0)
+                    else (age_dbh[k][2], age_dbh[k][2])
+                    for k in age_dbh}
+
+            # Definition of a formula to apply heterogeneity in the growth rate
+            # of each tree.
+            def GrowthHet(growth_rate, het_index):
                 # Recalculates the growth rate. The new growth rate will be
                 # a random value from a normal distribution with the original
                 # rate as the mean. The standard deviation is defined so that
@@ -1096,7 +1098,7 @@ class ProjectDiameters(object):  # Tool number 2
 
             # Calculation of the projected dbh (prj_dbh). The 'if' statement is
             # there to maintain the values of dbh of the dead trees as zero or None.
-            prj_dbh = {k: round(Disturbance(growth[k][1], het_index) * growth[k][0], 2)
+            prj_dbh = {k: round(GrowthHet(growth[k][1], het_index) * growth[k][0], 2)
                        if growth[k][0] not in (None, 0)
                        else growth[k][0] for k in growth}
 
@@ -1149,13 +1151,14 @@ class ProjectDiameters(object):  # Tool number 2
             living_trees = [k[0] for k in sorted(
                             arcpy.da.SearchCursor(trees, ['OID@', dbh_field]))
                             if k[1] not in (None, 0)]
+
             random_sample = random.sample(living_trees[1:], ndead_trees)
             random_sample_str = ", ".join(str(k) for k in random_sample)
 
             # Selects rows in the tree layer, based on the random sample that
             # was previously defined, than sets the dbh of the selected rows to
             # Null orzero depending on the data type.
-            if random_sample_str is not "":
+            if random_sample_str != "":
                 selection_expression = (
                     "" + desc.OIDFieldName + ' IN (' + random_sample_str + ')' + "")
 
@@ -1182,77 +1185,78 @@ class ProjectDiameters(object):  # Tool number 2
         return
 
 
-class EstimateHeight(object):
+class EstimateHeight(object):  # Tool number 3
     def __init__(self):
-        self.label = "Estimar altura"
-        self.description = (u"Estima a altura das árvores baseada no dap e "
-                            u"idade.")
+        self.label = "Estimate height"
+        self.description = (  # Tool description
+            "Estimates tree height based on DBH and age.")
         self.canRunInBackground = False
 
+    # Definition of inputs and outputs
     def getParameterInfo(self):
         trees = arcpy.Parameter(
-            displayName=u"Layer contendo as árvores",
+            displayName="Layer containing trees",
             name="trees",
             datatype="Feature Layer",
             parameterType="Required",
             direction="Input")
         trees.filter.list = ["Point"]
 
-        eq_type = arcpy.Parameter(
-            displayName="Tipo de modelo",
-            name="eq_type",
+        model_type = arcpy.Parameter(
+            displayName="Model type",
+            name="model_type",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        eq_type.filter.type = "ValueList"
-        eq_type.filter.list = ["Lundqvist_Korf", "Schumacher",
-                               "Gompertz", "Weibull"]
-        eq_type.value = "Weibull"
+        model_type.filter.type = "ValueList"
+        model_type.filter.list = ["Lundqvist_Korf", "Schumacher", "Gompertz", "Weibull"]
+
+        model_type.value = "Weibull"  # Default value as example
 
         dependent_variable = arcpy.Parameter(
-            displayName=u"Tipo de variável dependente",
+            displayName="Dependent variable type",
             name="dependent_variable",
             datatype="String",
             parameterType="Required",
             direction="Input")
         dependent_variable.filter.type = "ValueList"
-        dependent_variable.filter.list = ["dap", "dap * Idade"]
-        dependent_variable.value = "dap * Idade"
+        dependent_variable.filter.list = ["DBH", "DBH * age"]
+        dependent_variable.value = "DBH * age"  # Default value as example
 
         b0_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2080",
+            displayName=u"\u03b2\u2080 parameter",
             name="b0_prm",
             datatype="Double",
             parameterType="Required",
             direction="Input")
-        b0_prm.value = 27.79485
+        b0_prm.value = 27.79485  # Default value as example
 
         b1_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2081",
+            displayName=u"\u03b2\u2081 parameter",
             name="b1_prm",
             datatype="Double",
             parameterType="Required",
             direction="Input")
-        b1_prm.value = 20.78744
+        b1_prm.value = 20.78744  # Default value as example
 
         b2_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2082",
+            displayName=u"\u03b2\u2082 parameter",
             name="b2_prm",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        b2_prm.value = 0.02690
+        b2_prm.value = 0.02690  # Default value as example
 
         b3_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2083",
+            displayName=u"\u03b2\u2083 parameter",
             name="b3_prm",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        b3_prm.value = 0.90071
+        b3_prm.value = 0.90071  # Default value as example
 
         dbh_fields = arcpy.Parameter(
-            displayName="dap",
+            displayName="DBH",
             name="dbh_fields",
             datatype="Field",
             parameterType="Required",
@@ -1261,7 +1265,7 @@ class EstimateHeight(object):
         dbh_fields.parameterDependencies = [trees.name]
 
         age_fields = arcpy.Parameter(
-            displayName="Idade",
+            displayName="Age",
             name="age_fields",
             datatype="Field",
             parameterType="Optional",
@@ -1270,18 +1274,18 @@ class EstimateHeight(object):
         age_fields.parameterDependencies = [trees.name]
 
         het_index = arcpy.Parameter(
-            displayName=u"\xcdndice de heterogeneidade",
-            name="var_index",
+            displayName="Heterogeneity index",
+            name="het_index",
             datatype="Double",
             parameterType="Required",
             direction="Input",
-            category=u"Heterogeneidade")
-        het_index.value = 0.20
+            category="Heterogeneity")
+        het_index.value = 0.20  # Default value
         het_index.filter.type = "Range"
         het_index.filter.list = [0.00, 0.99]
 
         params = [trees,
-                  eq_type,
+                  model_type,
                   dependent_variable,
                   b0_prm,
                   b1_prm,
@@ -1292,37 +1296,39 @@ class EstimateHeight(object):
                   het_index]
         return params
 
+    # License conditions
     def isLicensed(self):
         return True
 
+    # Field validation according to what is inserted as parameter
     def updateParameters(self, parameters):
-        eq_type = parameters[1]
+        model_type = parameters[1]
         dependent_variable = parameters[2]
         b2_prm = parameters[5]
         b3_prm = parameters[6]
         age_fields = parameters[8]
 
-        # Field validation
         if dependent_variable.value == "dap * Idade":
             age_fields.enabled = True
         elif dependent_variable.value == "dap":
             age_fields.enabled = False
 
-        if eq_type.value == "Weibull":
+        if model_type.value == "Weibull":
             b2_prm.enabled = True
             b3_prm.enabled = True
-        elif eq_type.value in ("Lundqvist_Korf", "Gompertz"):
+        elif model_type.value in ("Lundqvist_Korf", "Gompertz"):
             b2_prm.enabled = True
             b3_prm.value = None
             b3_prm.enabled = False
-        elif eq_type.value == "Schumacher":
+        elif model_type.value == "Schumacher":
             b2_prm.value = None
             b2_prm.enabled = False
             b3_prm.value = None
             b3_prm.enabled = False
 
+    # Warning and error messages
     def updateMessages(self, parameters):
-        eq_type = parameters[1]
+        model_type = parameters[1]
         dependent_variable = parameters[2]
         b2_prm = parameters[5]
         b3_prm = parameters[6]
@@ -1334,34 +1340,36 @@ class EstimateHeight(object):
         if age_fields.value:
             age_fields_list = age_fields.valueAsText.split(";")
 
-        if dependent_variable.value == "dap * Idade":
+        # Error messages for dependent variable type
+        if dependent_variable.value == "DBH * age":
             if not age_fields.value:
                 age_fields.setErrorMessage(
-                    u"Campo(s) de idade são necessários quando a "
-                    u"variável dependente \xea 'dap * Idade'")
+                    "Age field(s) are required when dependent variable is DBH * age")
+                    
             if dbh_fields.value and age_fields.value:
                 if len(dbh_fields_list) != len(age_fields_list):
                     dbh_fields.setErrorMessage(
-                        u"Núamero de campos de dap e Idade deve ser o mesmo")
+                        "Number of fields for DBH and age must be the same")
                     age_fields.setErrorMessage(
-                        u"Núamero de campos de dap e Idade deve ser o mesmo")
+                        "Number of fields for DBH and age must be the same")
 
-        if eq_type.value:
-            if eq_type.value is "Weibull" or "Lundqvist_Korf" or "Gompertz":
+        # Error messages for model type
+        if model_type.value:
+            if model_type.value in ("Weibull", "Lundqvist_Korf", "Gompertz"):
                 if not b2_prm.value and (b2_prm.value != 0):
                     b2_prm.setErrorMessage(
-                        u"Parâmetro \xe9 necessário para uso do modelo "
-                        "selecionado.")
-            if eq_type.value == "Weibull":
+                        u"\u03b2\u2082 parameter is required for selected model")
+                        
+            if model_type.value == "Weibull":
                 if not b3_prm.value and (b3_prm.value != 0):
                     b3_prm.setErrorMessage(
-                        u"Parâmetro \xe9 necessário para uso do modelo "
-                        "selecionado.")
+                        u"\u03b2\u2083 parameter is required for selected model")
         return
 
+    # Tool execution
     def execute(self, parameters, messages):
         trees = parameters[0].valueAsText
-        eq_type = parameters[1].valueAsText
+        model_type = parameters[1].valueAsText
         dependent_variable = parameters[2].valueAsText
         b0_prm = parameters[3].value
         b1_prm = parameters[4].value
@@ -1374,48 +1382,47 @@ class EstimateHeight(object):
         dbh_fields_list = dbh_fields.split(";")
 
         # Creates a dummy value for age_fields, so the calculations of height
-        # can work when dependent variable is only dbh.
+        # can work when dependent variable is only DBH.
         if age_fields == "#" or not age_fields:
             age_fields = len(dbh_fields_list) * "OID@;"
             age_fields = age_fields[:-1]
         age_fields_list = age_fields.split(";")
 
         # Calculation of a 'seed' for each tree. The seed is an input value to
-        # the calculation of pseudo-random numbers, used when establishing a
-        # disturbance on the estimates of height. It could be any number, as
+        # the calculation of pseudo-random numbers, used when establishing
+        # heterogeneity on the estimates of height. It could be any number, as
         # long as it is a unique value for each tree.
         seeds = {k[0]: k[1][0] + k[1][1] for k in
                  arcpy.da.SearchCursor(trees, ['OID@', 'SHAPE@XY'])}
 
         # Definition of the models. The models are conditioned by the dependent
-        # variable being dbh or dbh*Age.
+        # variable being DBH or DBH * age.
         def Lundqvist_Korf(b0, b1, b2, dbh, age):
-            if dependent_variable == "dap * Idade":
-                return b0*np.exp(-b1/(dbh*age)**b2)
+            if dependent_variable == "DBH * age":
+                return b0 * np.exp(-b1 / (dbh * age) ** b2)
             else:
-                return b0*np.exp(-b1/dbh**b2)
+                return b0 * np.exp(-b1 / dbh ** b2)
 
         def Schumacher(b0, b1, dbh, age):
-            if dependent_variable == "dap * Idade":
-                return b0*np.exp(-b1/(dbh*age))
+            if dependent_variable == "DBH * age":
+                return b0 * np.exp(-b1 / (dbh * age))
             else:
                 return b0*np.exp(-b1/dbh)
 
         def Gompertz(b0, b1, b2, dbh, age):
-            if dependent_variable == "dap * Idade":
+            if dependent_variable == "DBH * age":
                 return b0*np.exp(-b1*np.exp(-b2*(dbh*age)))
             else:
                 return b0*np.exp(-b1*np.exp(-b2*dbh))
 
         def Weibull(b0, b1, b2, b3, dbh, age):
-            if dependent_variable == "dap * Idade":
+            if dependent_variable == "DBH * age":
                 return b0-b1*np.exp(-b2*(dbh*age)**b3)
             else:
                 return b0-b1*np.exp(-b2*dbh**b3)
 
-        # Definition of a formula to apply of a disturbance on the height of
-        # each tree.
-        def Disturbance(seed, height, het_index):
+        # Definition of a formula to apply heterogeneity on the height of each tree.
+        def HeightHet(seed, height, het_index):
             # Recalculates the height of the tree (new_height). The new_height
             # will be a value from a normal distribution with the original
             # height as the mean. The value of std is defined so that 99.7% of
@@ -1443,112 +1450,114 @@ class EstimateHeight(object):
         for dbhfield, agefield in zip(dbh_fields_list, age_fields_list):
             # Dictionary of OIDs, age and dbh.
             dbh_dic = {k[0]: (k[1], k[2]) for k in
-                       arcpy.da.SearchCursor(trees,
-                                             ["OID@", agefield, dbhfield])}
+                       arcpy.da.SearchCursor(trees, ["OID@", agefield, dbhfield])}
 
-            arcpy.AddMessage("Estimando alturas de " + dbhfield)
+            arcpy.AddMessage("Estimating heights for " + dbhfield)
 
             # Dictionary of OIDs and estimated heights.
-            if eq_type == "Lundqvist_Korf":
-                heights = {k: Lundqvist_Korf(b0_prm, b1_prm, b2_prm,
-                                             dbh_dic[k][1], dbh_dic[k][0])
-                           if dbh_dic[k][1] not in (None, 0)
-                           else dbh_dic[k][1] for k in dbh_dic}
-            elif eq_type == "Schumacher":
-                heights = {k: Schumacher(b0_prm, b1_prm,
-                                         dbh_dic[k][1], dbh_dic[k][0])
-                           if dbh_dic[k][1] not in (None, 0)
-                           else dbh_dic[k][1] for k in dbh_dic}
-            elif eq_type == "Gompertz":
-                heights = {k: Gompertz(b0_prm, b1_prm, b2_prm,
-                                       dbh_dic[k][1], dbh_dic[k][0])
-                           if dbh_dic[k][1] not in (None, 0)
-                           else dbh_dic[k][1] for k in dbh_dic}
-            elif eq_type == "Weibull":
-                heights = {k: Weibull(b0_prm, b1_prm, b2_prm, b3_prm,
-                                      dbh_dic[k][1], dbh_dic[k][0])
-                           if dbh_dic[k][1] not in (None, 0)
-                           else dbh_dic[k][1] for k in dbh_dic}
+            if model_type == "Lundqvist_Korf":
+                heights = {
+                    k: Lundqvist_Korf(b0_prm, b1_prm, b2_prm, dbh_dic[k][1], dbh_dic[k][0])
+                    if dbh_dic[k][1] not in (None, 0) else dbh_dic[k][1]
+                    for k in dbh_dic}
+
+            elif model_type == "Schumacher":
+                heights = {
+                    k: Schumacher(b0_prm, b1_prm, dbh_dic[k][1], dbh_dic[k][0])
+                    if dbh_dic[k][1] not in (None, 0) else dbh_dic[k][1]
+                    for k in dbh_dic}
+
+            elif model_type == "Gompertz":
+                heights = {
+                    k: Gompertz(b0_prm, b1_prm, b2_prm, dbh_dic[k][1], dbh_dic[k][0])
+                    if dbh_dic[k][1] not in (None, 0) else dbh_dic[k][1]
+                    for k in dbh_dic}
+
+            elif model_type == "Weibull":
+                heights = {
+                    k: Weibull(b0_prm, b1_prm, b2_prm, b3_prm, dbh_dic[k][1], dbh_dic[k][0])
+                    if dbh_dic[k][1] not in (None, 0) else dbh_dic[k][1]
+                    for k in dbh_dic}
 
             # Estimation of heights. The 'if' statement is there to maintain
             # the values of height of the deadtrees as zero or None.
-            new_heights = {k: round(Disturbance(seeds[k], heights[k],
-                                                het_index), 2)
-                           if heights[k] not in (None, 0)
-                           else heights[k] for k in heights}
+            new_heights = {
+                k: round(HeightHet(seeds[k], heights[k], het_index), 2)
+                if heights[k] not in (None, 0)
+                else heights[k] for k in heights}
 
             # Adds field for height
             height_field = "Ht_" + dbhfield
             arcpy.AddField_management(trees, height_field, "FLOAT")
 
             # Fills field of height
-            with arcpy.da.UpdateCursor(trees, ['OID@',
-                                               height_field]) as cursor:
+            with arcpy.da.UpdateCursor(trees, ['OID@', height_field]) as cursor:
                 for row in cursor:
                     row[1] = new_heights[row[0]]
                     cursor.updateRow(row)
         return
 
 
-class EstimateVolume(object):
+class EstimateVolume(object):  # Tool number 4
     def __init__(self):
-        self.label = "Estimar volume"
-        self.description = (u"Estima o volume das árvores baseado no dap e "
-                            "altura.")
+        self.label = "Estimate volume"
+        self.description = (  # Tool description
+            "Estimates the volume of trees based on DBH and height.")
         self.canRunInBackground = False
 
+    # Definition of inputs and outputs
     def getParameterInfo(self):
         trees = arcpy.Parameter(
-            displayName=u"Layer contendo as árvores",
+            displayName="Layer containing trees",
             name="trees",
             datatype="Feature Layer",
             parameterType="Required",
             direction="Input")
         trees.filter.list = ["Point"]
 
-        eq_type = arcpy.Parameter(
-            displayName="Tipo de estimativa",
-            name="eq_type",
+        est_type = arcpy.Parameter(
+            displayName="Estimate type",
+            name="est_type",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        eq_type.filter.type = "ValueList"
-        eq_type.filter.list = ["Modelo Schumacher & Hall", "Fator de forma"]
-        eq_type.value = "Modelo Schumacher & Hall"
+        est_type.filter.type = "ValueList"
+        est_type.filter.list = ["Schumacher & Hall model", "Form factor"]
+        est_type.value = "Schumacher & Hall model"  # Default value as example
 
         b0_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2080",
+            displayName=u"\u03b2\u2080 parameter",
             name="b0_prm",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        b0_prm.value = -10.44771
+        b0_prm.value = -10.44771  # Default value as example
 
         b1_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2081",
+            displayName=u"\u03b2\u2081 parameter",
             name="b1_prm",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        b1_prm.value = 1.86852
+        b1_prm.value = 1.86852  # Default value as example
 
         b2_prm = arcpy.Parameter(
-            displayName=u"Parâmetro \u03b2\u2082",
+            displayName=u"\u03b2\u2082 parameter",
             name="b2_prm",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        b2_prm.value = 1.17904
+        b2_prm.value = 1.17904  # Default value as example
 
         ff = arcpy.Parameter(
-            displayName="Fator de forma",
+            displayName="Form factor",
             name="ff",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
 
         dbh_fields = arcpy.Parameter(
-            displayName="dap",
+            displayName="DBH",
             name="dbh_fields",
             datatype="Field",
             parameterType="Required",
@@ -1557,7 +1566,7 @@ class EstimateVolume(object):
         dbh_fields.parameterDependencies = [trees.name]
 
         h_fields = arcpy.Parameter(
-            displayName="Altura",
+            displayName="Height",
             name="h_fields",
             datatype="Field",
             parameterType="Required",
@@ -1566,7 +1575,7 @@ class EstimateVolume(object):
         h_fields.parameterDependencies = [trees.name]
 
         params = [trees,
-                  eq_type,
+                  est_type,
                   b0_prm,
                   b1_prm,
                   b2_prm,
@@ -1575,18 +1584,19 @@ class EstimateVolume(object):
                   h_fields]
         return params
 
+    # License conditions
     def isLicensed(self):
         return True
 
+    # Field validation according to what is inserted as parameter
     def updateParameters(self, parameters):
-        eq_type = parameters[1]
+        est_type = parameters[1]
         b0_prm = parameters[2]
         b1_prm = parameters[3]
         b2_prm = parameters[4]
         ff = parameters[5]
 
-        # Form validation
-        if eq_type.value == "Modelo Schumacher & Hall":
+        if est_type.value == "Schumacher & Hall model":
             ff.value = None
             ff.enabled = False
             b0_prm.enabled = True
@@ -1602,8 +1612,9 @@ class EstimateVolume(object):
             b2_prm.enabled = False
         return
 
+    # Warning and error messages
     def updateMessages(self, parameters):
-        eq_type = parameters[1]
+        est_type = parameters[1]
         b0_prm = parameters[2]
         b1_prm = parameters[3]
         b2_prm = parameters[4]
@@ -1616,36 +1627,34 @@ class EstimateVolume(object):
         if h_fields.value:
             h_fields_list = h_fields.valueAsText.split(";")
 
+        # Validation for BHD and age fields
         if dbh_fields.value and h_fields.value:
             if len(dbh_fields_list) != len(h_fields_list):
                 dbh_fields.setErrorMessage(
-                    u"Núamero de campos de dap e altura deve ser o mesmo")
+                    "Number of DBH and height fields must be the same")
                 h_fields.setErrorMessage(
-                    u"Núamero de campos de dap e altura deve ser o mesmo")
+                    "Number of DBH and height fields must be the same")
 
-        if eq_type.value == "Modelo Schumacher & Hall":
+        if est_type.value == "Modelo Schumacher & Hall":
             if not b0_prm.value and (b0_prm.value != 0):
                 b0_prm.setErrorMessage(
-                    u"Parâmetro \xe9 necessário para uso do modelo "
-                    "selecionado.")
+                    u"\u03b2\u2080 parameter is required for selected model.")
             if not b1_prm.value and (b1_prm.value != 0):
                 b1_prm.setErrorMessage(
-                    u"Parâmetro \xe9 necessário para uso do modelo "
-                    "selecionado.")
+                    u"\u03b2\u2081 parameter is required for selected model.")
             if not b2_prm.value and (b2_prm.value != 0):
                 b2_prm.setErrorMessage(
-                    u"Parâmetro \xe9 necessário para uso do modelo "
-                    "selecionado.")
+                    u"\u03b2\u2082 parameter is required for selected model.")
         else:
             if not ff.value:
                 ff.setErrorMessage(
-                    u"Fator de forma \xe9 necessário para cálculo do "
-                    "volume.")
+                    "Form factor is required to calculate volume.")
         return
 
+    # Tool execution
     def execute(self, parameters, messages):
         trees = parameters[0].valueAsText
-        eq_type = parameters[1].valueAsText
+        est_type = parameters[1].valueAsText
         b0_prm = parameters[2].value
         b1_prm = parameters[3].value
         b2_prm = parameters[4].value
@@ -1666,22 +1675,22 @@ class EstimateVolume(object):
         # Adds fields for volume and calculates it.
         for dbhfield, hfield in zip(dbh_fields_list, h_fields_list):
             volume_field = "V_" + dbhfield
-            arcpy.AddMessage(u"Calculando volumes para " + volume_field)
+            arcpy.AddMessage("Calculating volumes for " + volume_field)
             arcpy.AddField_management(trees, volume_field, "FLOAT")
-            if eq_type == "Modelo Schumacher & Hall":
-                volumes = {k[0]: round(Schumacher_Hall(b0_prm, b1_prm, b2_prm,
-                                                       k[1], k[2]), 4)
-                           if k[1] not in (None, 0) else k[1] for k in
-                           arcpy.da.SearchCursor(trees,
-                                                 ['OID@', dbhfield, hfield])}
-            elif eq_type == "Fator de forma":
-                volumes = {k[0]: round(Form_factor(ff, k[1], k[2]), 4)
-                           if k[1] not in (None, 0) else k[1] for k in
-                           arcpy.da.SearchCursor(trees,
-                                                 ['OID@', dbhfield, hfield])}
 
-            with arcpy.da.UpdateCursor(trees,
-                                       ['OID@', volume_field]) as cursor:
+            if est_type == "Schumacher & Hall model":
+                volumes = {
+                    k[0]: round(Schumacher_Hall(b0_prm, b1_prm, b2_prm, k[1], k[2]), 4)
+                    if k[1] not in (None, 0) else k[1] for k in
+                    arcpy.da.SearchCursor(trees, ['OID@', dbhfield, hfield])}
+
+            elif est_type == "Form factor":
+                volumes = {
+                    k[0]: round(Form_factor(ff, k[1], k[2]), 4)
+                    if k[1] not in (None, 0) else k[1] for k in
+                    arcpy.da.SearchCursor(trees, ['OID@', dbhfield, hfield])}
+
+            with arcpy.da.UpdateCursor(trees, ['OID@', volume_field]) as cursor:
                 for row in cursor:
                     row[1] = volumes[row[0]]
                     cursor.updateRow(row)
@@ -1690,14 +1699,15 @@ class EstimateVolume(object):
 
 class dbhClasses(object):
     def __init__(self):
-        self.label = "Classificar dap"
-        self.description = (u"Gera o centro de classe de diâmetro para "
-                            "cada dap.")
+        self.label = "Classes for DBH"
+        self.description = (  # Tool description
+            "Generates the diameter class center for each DBH.")
         self.canRunInBackground = False
 
+    # Definition of inputs and outputs
     def getParameterInfo(self):
         trees = arcpy.Parameter(
-            displayName=u"Layer contendo as árvores",
+            displayName="Layer containing trees",
             name="trees",
             datatype="Feature Layer",
             parameterType="Required",
@@ -1705,23 +1715,23 @@ class dbhClasses(object):
         trees.filter.list = ["Point"]
 
         class_range = arcpy.Parameter(
-            displayName="Intervalo de classe",
+            displayName="Class range",
             name="class_range",
             datatype="Double",
             parameterType="Required",
             direction="Input")
-        class_range.value = 2
+        class_range.value = 2  # Default value
 
         minimum_dbh = arcpy.Parameter(
-            displayName=u"dap mínimo",
+            displayName="Minimum DBH",
             name="minimum_dbh",
             datatype="Double",
             parameterType="Optional",
             direction="Input")
-        minimum_dbh.value = 4
+        minimum_dbh.value = 4  # Default value
 
         dbh_fields = arcpy.Parameter(
-            displayName="dap",
+            displayName="DBH",
             name="dbh_fields",
             datatype="Field",
             parameterType="Required",
@@ -1735,15 +1745,19 @@ class dbhClasses(object):
                   dbh_fields]
         return params
 
+    # License conditions
     def isLicensed(self):
         return True
 
+    # Field validation according to what is inserted as parameter
     def updateParameters(self, parameters):
         return
 
+    # Warning and error messages
     def updateMessages(self, parameters):
         return
 
+    # Tool execution
     def execute(self, parameters, messages):
         trees = parameters[0].valueAsText
         class_range = parameters[1].value
@@ -1786,7 +1800,7 @@ class dbhClasses(object):
                         return k - class_range / 2.0
 
         for field in dbh_fields_list:
-            arcpy.AddMessage(u"Classificando os dap para " + field + "_C")
+            arcpy.AddMessage("Creating DBH classes for " + field + "_C")
             arcpy.AddField_management(trees, field + "_C", "FLOAT")
             with arcpy.da.UpdateCursor(trees, [field, field + "_C"]) as cursor:
                 for row in cursor:
