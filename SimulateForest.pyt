@@ -1635,7 +1635,7 @@ class EstimateVolume(object):  # Tool number 4
                 h_fields.setErrorMessage(
                     "Number of DBH and height fields must be the same")
 
-        if est_type.value == "Modelo Schumacher & Hall":
+        if est_type.value == "Schumacher & Hall model":
             if not b0_prm.value and (b0_prm.value != 0):
                 b0_prm.setErrorMessage(
                     u"\u03b2\u2080 parameter is required for selected model.")
