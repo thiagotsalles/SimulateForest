@@ -188,11 +188,11 @@ to use the Schumacher and Hall model, he must select the DBH and Ht fields for
 which he wants to estimate the volume.
 <br><br>
 
-<img src="./Images/fig13.png">
+<img src="./Images/fig13.png">\
 *Tool #4 interface with example inputs.*
 <br><br>
 
-<img src="./Images/fig14.png">
+<img src="./Images/fig14.png">\
 *Attribute table of the point feature after applying Tool #4.*
 <br><br>
 
@@ -205,10 +205,10 @@ DBH value to consider when creating the classes. If the minimum value is not
 given, it will be equal to the smallest DBH found in the attribute table.
 <br><br>
 
-<img src="./Images/fig15.png">
+<img src="./Images/fig15.png">\
 *Tool #5 interface with example inputs.*
 <br><br>
 
-<img src="./Images/fig16.png">
+<img src="./Images/fig16.png">\
 *Attribute table of the point feature after applying Tool #4.*
 <br><br>
