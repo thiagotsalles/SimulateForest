@@ -11,10 +11,9 @@ even-aged forest, with attribute tables containing DBH, height, and volume value
 A complete document about the Toolbox is published (in Portuguese) here: 
 [Simulation of even-aged forests](http://www.locus.ufv.br/bitstream/handle/123456789/9896/texto%20completo.pdf)
 
-<br>
-<img src="./Images/fig1.png">
+<img src="./Images/fig1.png">\
 *Toolbox overview and an example of a simulated forest in ArcScene.*
-<br>
+<br><br><br>
 
 ### Table of Contents
 [**Introduction**](#introduction)<br>
@@ -40,6 +39,7 @@ to what is seen in
 The “(optional)” seen after the names of some inputs do not always indicate that 
 the input is optional. This inconsistency happens because it is not allowed to 
 set an input as required or optional based on the value of another input.
+<br><br>
 
 ## Tool #1: Create trees with DBH
 This tool creates a mesh of points (representing trees) based on a surface and 
@@ -65,19 +65,19 @@ Finally, the percentage of surviving trees is determined. A number of points is
 randomly selected according to the % value provided by the user, and their diameter 
 fields are left empty (null). If the file to be saved does not allow fields to 
 be null, DBH is set to zero.
+<br><br>
 
-<br>
-<img src="./Images/fig2.png">
+<img src="./Images/fig2.png">\
 *Tool #1 interface with example inputs.*
-<br>
-<br>
-<img src="./Images/fig3.png">
+<br><br>
+
+<img src="./Images/fig3.png">\
 *Point feature resulted from Tool #1.*
-<br>
-<br>
-<img src="./Images/fig4.png">
+<br><br>
+
+<img src="./Images/fig4.png">\
 *Attribute table of the point feature resulted from Tool #1.*
-<br>
+<br><br>
 
 ## Tool #2: Project DBH and survival
 This tool projects the DBH from an early age to a future age. It is applied to 
@@ -131,15 +131,15 @@ the number of living trees in relation to *N*<sub>1</sub>.
 Dead trees are randomly selected. The DBH fields of these trees are left empty 
 (null). If the file to be saved does not allow fields to be null, DBH is set to 
 zero.
+<br><br>
 
-<br>
-<img src="./Images/fig7.png">
+<img src="./Images/fig7.png">\
 *Tool #2 interface with example inputs.*
-<br>
-<br>
-<img src="./Images/fig8.png">
+<br><br>
+
+<img src="./Images/fig8.png">\
 *Attribute table of the point feature after applying Tool #2.*
-<br>
+<br><br>
 
 ## Tool #3: Estimate height
 This tool estimates the height of living trees represented in a point-like 
@@ -161,15 +161,15 @@ A heterogeneity index ranging from 0 to 1 was added to the Estimate Height tool.
 It allows different heights to be calculated for trees of same DBH and age, but 
 preserving the overall mean of heights. The closer the index is to 1, the greater 
 the heterogeneity.
+<br><br>
 
-<br>
-<img src="./Images/fig10.png">
+<img src="./Images/fig10.png">\
 *Tool #3 interface with example inputs.*
-<br>
-<br>
-<img src="./Images/fig11.png">
+<br><br>
+
+<img src="./Images/fig11.png">\
 *Attribute table of the point feature after applying Tool #3.*
-<br>
+<br><br>
 
 ## Tool #4: Estimate volume
 This tool estimates the volume of living trees represented in a point-like 
@@ -186,15 +186,15 @@ After selecting which method to use for the estimates, the user must provide
 the form factor or model parameters for the calculations. Then, if he has chosen 
 to use the Schumacher and Hall model, he must select the DBH and Ht fields for 
 which he wants to estimate the volume.
+<br><br>
 
-<br>
 <img src="./Images/fig13.png">
 *Tool #4 interface with example inputs.*
-<br>
-<br>
+<br><br>
+
 <img src="./Images/fig14.png">
 *Attribute table of the point feature after applying Tool #4.*
-<br>
+<br><br>
 
 ## Tool #5: Classes for DBH
 This tool calculates the center of the diameter class to which the DBH values 
@@ -203,11 +203,12 @@ of an attribute table field belong.
 The user must define the size of the class range and (optionally) the minimum 
 DBH value to consider when creating the classes. If the minimum value is not 
 given, it will be equal to the smallest DBH found in the attribute table.
+<br><br>
 
-<br>
 <img src="./Images/fig15.png">
 *Tool #5 interface with example inputs.*
-<br>
-<br>
+<br><br>
+
 <img src="./Images/fig16.png">
 *Attribute table of the point feature after applying Tool #4.*
+<br><br>
